@@ -12,7 +12,7 @@ export const PLANS = {
   pro: {
     label: "Pro",
     credits: 150,
-    price: 29,
+    price: 19,
   },
 } as const;
 
@@ -50,7 +50,7 @@ export const PRICING_PLANS = [
     key: "pro",
     label: "Pro",
     description: "For power users who ship fast.",
-    price: 29,
+    price: 19,
     featured: false,
     planId: "cplan_3DvxTfywwB0NyQ1iqANclgNqlq8",
     active: false,

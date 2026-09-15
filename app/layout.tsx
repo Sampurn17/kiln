@@ -32,7 +32,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <ClerkProvider>
       <html
         lang="en" suppressHydrationWarning>
-        <body className={'${lora.variable} ${dmSans.variable} font-sans'}>
+        <body className={`${lora.variable} ${dmSans.variable} font-sans`}>
           <ThemeProvider
             attribute="class"
             defaultTheme="dark"
