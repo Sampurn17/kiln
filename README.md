@@ -11,6 +11,11 @@
 [![Prisma](https://img.shields.io/badge/Prisma-7-2D3748?logo=prisma)](https://www.prisma.io/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
+<br />
+<br />
+
+<img src="./screenshots/landing-page.png" alt="Kiln Landing Page" width="100%" />
+
 </div>
 
 ---
@@ -37,6 +42,31 @@ Think of it as your personal AI software engineer: describe what you want, watch
 | 💳 **Credit System** | Tiered pricing (Free / Starter / Pro) with per-generation credit consumption |
 | 🛡️ **Bot & Abuse Protection** | [Arcjet](https://arcjet.com/) middleware for rate limiting, bot detection, and shield protection |
 | 📱 **Responsive Landing Page** | Animated hexagon background, rotating placeholders, and premium dark-mode design |
+
+---
+
+## 📸 Screenshots
+
+### 🖥️ AI Workspace & Live App Generation
+Transform prompts into production-ready React apps with real-time streaming AI reasoning, live in-browser preview via Sandpack, and code editing.
+
+<br />
+
+#### 🎵 Spotify Stats Dashboard (`RedPulse`)
+Interactive Spotify-themed analytics dashboard featuring custom SVG charts, dynamic timeframe switching, audio playback simulator with animated sound visualizer, and dark/light themes.
+
+<p align="center">
+  <img src="./screenshots/workspace-spotify-app.png" alt="Spotify Stats Dashboard preview in Kiln" width="100%" />
+</p>
+
+<br />
+
+#### ⏱️ Pomodoro Focus App (`PomoFlow`)
+Full-featured Pomodoro timer with integrated task checklist, customizable intervals, synthesized Web Audio sound alerts, and celebration confetti.
+
+<p align="center">
+  <img src="./screenshots/workspace-pomodoro-app.png" alt="Pomodoro Focus App preview in Kiln" width="100%" />
+</p>
 
 ---
 
@@ -213,6 +243,10 @@ Iteratively improves existing code using the **Cline AI Agent** (Pro users only)
 ---
 
 ## 💰 Pricing Tiers
+
+<p align="center">
+  <img src="./screenshots/pricing-plans.png" alt="Kiln Pricing Plans" width="100%" />
+</p>
 
 | Plan | Price | Credits/Month | Features |
 |---|---|---|---|
