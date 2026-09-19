@@ -6,8 +6,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Show, SignInButton, SignUpButton, UserButton } from '@clerk/nextjs';
 import { ArrowRight, Zap } from "lucide-react";
-import { PLANS } from "@/lib/constant";
-import { Plan } from "@/types/plans";
+
 
 interface HeaderClientProps {
   user: {
@@ -51,7 +50,7 @@ const HeaderClient = ({ user }: HeaderClientProps) => {
             </Link>
             {user && <PricingModal>
               <span className="inline-flex h-8 items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 text-xs text-white/70">
-                <Zap className="w-3 h-3" />{user.credits}/{PLANS[user.plan as Plan].credits} credits</span>
+                <Zap className="w-3 h-3" />{user.credits} credits</span>
             </PricingModal>}
             <UserButton />
           </Show>

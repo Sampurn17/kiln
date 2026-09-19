@@ -10,7 +10,7 @@ export const BlueTitle = ({
     className?: string;
 }) => (
     <span
-        className={`bg-linear-to-br font-serif from-blue-300 via-blue-400 to-blue-600 bg-clip-text text-transparent ${className}`}
+        className={`font-serif text-blue-400 ${className}`}
     >
         {children}
     </span>
