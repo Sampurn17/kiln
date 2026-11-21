@@ -182,10 +182,10 @@ export async function POST(request: NextRequest) {
       try {
         const contents = buildContents(messages, fileData);
 
-        console.log('[gen-ai-code] Starting generation with model: gemini-2.0-flash-exp');
+        console.log('[gen-ai-code] Starting generation with model: gemini-1.5-flash');
         
         const geminiStream = await ai.models.generateContentStream({
-          model: "gemini-2.0-flash-exp",
+          model: "gemini-1.5-flash",
           contents,
           config: {
             systemInstruction: SYSTEM_PROMPT,
