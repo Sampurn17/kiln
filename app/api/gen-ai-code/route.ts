@@ -182,8 +182,10 @@ export async function POST(request: NextRequest) {
       try {
         const contents = buildContents(messages, fileData);
 
+        console.log('[gen-ai-code] Starting generation with model: gemini-2.0-flash-exp');
+        
         const geminiStream = await ai.models.generateContentStream({
-          model: "gemini-3.5-flash",
+          model: "gemini-2.0-flash-exp",
           contents,
           config: {
             systemInstruction: SYSTEM_PROMPT,
@@ -320,6 +322,12 @@ export async function POST(request: NextRequest) {
         );
       } catch (err) {
         console.error("[gen-ai-code] stream error:", err);
+        // Log more details about the error
+        if (err instanceof Error) {
+          console.error("[gen-ai-code] Error name:", err.name);
+          console.error("[gen-ai-code] Error message:", err.message);
+          console.error("[gen-ai-code] Error stack:", err.stack);
+        }
         enqueue(
           sseEvent("error", {
             message: "Something went wrong. Please try again.",
