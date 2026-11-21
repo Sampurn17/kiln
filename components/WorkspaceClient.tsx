@@ -150,7 +150,12 @@ export function WorkspaceClient({
           setMessages((prev) => prev.slice(0, -1));
           return;
         }
-        if (!res.ok || !res.body) throw new Error("Generation failed");
+        if (!res.ok || !res.body) {
+          const errorData = await res.json().catch(() => null);
+          throw new Error(
+            errorData?.message || `Generation failed with status ${res.status}`
+          );
+        }
 
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
@@ -166,6 +171,7 @@ export function WorkspaceClient({
 
           for (const line of lines) {
             if (!line.startsWith("data: ")) continue;
+            let sseError: string | null = null;
             try {
               const event = JSON.parse(line.slice(6));
               if (event.type === "status") {
@@ -185,10 +191,13 @@ export function WorkspaceClient({
                   `/workspace?id=${event.workspaceId}`
                 );
               } else if (event.type === "error") {
-                throw new Error(event.message);
+                sseError = event.message || "Generation error occurred";
               }
             } catch {
               // skip malformed SSE lines
+            }
+            if (sseError) {
+              throw new Error(sseError);
             }
           }
         }
@@ -283,6 +292,7 @@ export function WorkspaceClient({
 
           for (const line of lines) {
             if (!line.startsWith("data: ")) continue;
+            let sseError: string | null = null;
             try {
               const event = JSON.parse(line.slice(6));
 
@@ -314,10 +324,13 @@ export function WorkspaceClient({
                   return updated;
                 });
               } else if (event.type === "error") {
-                throw new Error(event.message);
+                sseError = event.message || "Improve error occurred";
               }
             } catch {
               // skip malformed SSE lines
+            }
+            if (sseError) {
+              throw new Error(sseError);
             }
           }
         }

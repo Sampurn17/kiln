@@ -182,45 +182,122 @@ export async function POST(request: NextRequest) {
       try {
         const contents = buildContents(messages, fileData);
 
-        console.log('[gen-ai-code] Starting generation with model: gemini-1.5-flash');
-        
-        const geminiStream = await ai.models.generateContentStream({
-          model: "gemini-1.5-flash",
-          contents,
-          config: {
-            systemInstruction: SYSTEM_PROMPT,
-            temperature: 0.7,
-            responseMimeType: "application/json",
-            thinkingConfig: {
-              includeThoughts: true,
-            },
-          },
-        });
+        const primaryModel = process.env.GEMINI_MODEL || "gemini-3.1-flash-lite";
+        const fallbackModels = ["gemini-flash-lite-latest", "gemini-3.8-flash"];
+        const modelsToTry = [
+          primaryModel,
+          ...fallbackModels.filter((m) => m !== primaryModel),
+        ];
 
-        let accumulated = ""; // final JSON output
-        let lastEmitTime = 0; // throttle thought emissions
+        let accumulated = "";
+        let lastEmitTime = 0;
+        let successfulStream = false;
+        let lastError: Error | null = null;
 
-        for await (const chunk of geminiStream) {
-          const parts = chunk.candidates?.[0]?.content?.parts ?? [];
+        for (const model of modelsToTry) {
+          if (successfulStream) break;
 
-          for (const part of parts) {
-            if (!part.text) continue;
+          for (let attempt = 1; attempt <= 2; attempt++) {
+            if (attempt > 1) {
+              console.log(
+                `[gen-ai-code] Retrying model ${model} (attempt ${attempt}) after backoff...`
+              );
+              enqueue(
+                sseEvent("status", {
+                  message: `Retrying with ${model} (attempt ${attempt})…`,
+                })
+              );
+              await new Promise((r) => setTimeout(r, 1500));
+            } else if (model !== primaryModel) {
+              enqueue(
+                sseEvent("status", {
+                  message: `Failing over to ${model}…`,
+                })
+              );
+            }
 
-            if (part.thought) {
-              // Extract just the short label — not the full wall of text
-              const now = Date.now();
-              if (now - lastEmitTime > 600) {
-                const label = extractThoughtLabel(part.text);
-                if (label) {
-                  enqueue(sseEvent("status", { message: label }));
-                  lastEmitTime = now;
+            console.log(
+              `[gen-ai-code] Starting generation with model: ${model} (attempt ${attempt})`
+            );
+
+            const abortController = new AbortController();
+            let firstChunkReceived = false;
+
+            // 60-second timeout until first chunk
+            const timeoutId = setTimeout(() => {
+              if (!firstChunkReceived) {
+                console.warn(
+                  `[gen-ai-code] Timeout (60s) waiting for first chunk on ${model}`
+                );
+                abortController.abort(
+                  new Error("Timeout waiting for AI model response (60s)")
+                );
+              }
+            }, 60000);
+
+            try {
+              const geminiStream = await ai.models.generateContentStream({
+                model,
+                contents,
+                config: {
+                  systemInstruction: SYSTEM_PROMPT,
+                  temperature: 0.7,
+                  maxOutputTokens: 8192,
+                  responseMimeType: "application/json",
+                  abortSignal: abortController.signal,
+                },
+              });
+
+              for await (const chunk of geminiStream) {
+                if (!firstChunkReceived) {
+                  firstChunkReceived = true;
+                  clearTimeout(timeoutId);
+                }
+
+                const parts = chunk.candidates?.[0]?.content?.parts ?? [];
+
+                for (const part of parts) {
+                  if (!part.text) continue;
+
+                  if (part.thought) {
+                    const now = Date.now();
+                    if (now - lastEmitTime > 600) {
+                      const label = extractThoughtLabel(part.text);
+                      if (label) {
+                        enqueue(sseEvent("status", { message: label }));
+                        lastEmitTime = now;
+                      }
+                    }
+                  } else {
+                    accumulated += part.text;
+                  }
                 }
               }
-            } else {
-              // Actual JSON output
-              accumulated += part.text;
+
+              clearTimeout(timeoutId);
+
+              if (accumulated.trim().length > 0) {
+                successfulStream = true;
+                break;
+              }
+            } catch (err) {
+              clearTimeout(timeoutId);
+              lastError =
+                err instanceof Error ? err : new Error(String(err));
+              console.warn(
+                `[gen-ai-code] Model ${model} attempt ${attempt} failed:`,
+                lastError.message
+              );
+              accumulated = ""; // reset for next attempt
             }
           }
+        }
+
+        if (!successfulStream) {
+          throw (
+            lastError ||
+            new Error("Failed to receive stream response from AI model.")
+          );
         }
 
         // ── Parse the complete JSON response ──────────────────────────────────
@@ -330,7 +407,10 @@ export async function POST(request: NextRequest) {
         }
         enqueue(
           sseEvent("error", {
-            message: "Something went wrong. Please try again.",
+            message:
+              err instanceof Error
+                ? err.message
+                : "Something went wrong. Please try again.",
           })
         );
       } finally {
